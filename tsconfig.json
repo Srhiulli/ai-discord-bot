@@ -1,0 +1,16 @@
+{
+  "exclude": ["**/*.spec.*"],
+  "compilerOptions": {
+    "typeRoots": ["./node_modules/@types", "./@types"],
+    "sourceMap": true,
+    "target": "ES2020",
+    "module": "ESNext",
+    "moduleResolution": "Node",
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "strict": true,
+    "outDir": "dist"
+  },
+  "include": ["src"]
+}
