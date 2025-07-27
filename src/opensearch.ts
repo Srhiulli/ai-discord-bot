@@ -5,7 +5,7 @@ import { Client } from '@opensearch-project/opensearch';
 import fetch from 'node-fetch'; 
 
 export const client = new Client({
-  node: 'http://localhost:9200',
+  node: 'https://localhost:9200',
   auth: {
     username: 'admin',
     password: process.env.OPENSEARCH_INITIAL_ADMIN_PASSWORD || '',
