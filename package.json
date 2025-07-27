@@ -18,12 +18,14 @@
   },
   "devDependencies": {
     "@types/node": "^24.1.0",
+    "@types/node-fetch": "^2.6.12",
     "typescript": "^5.8.3"
   },
   "dependencies": {
     "@opensearch-project/opensearch": "^3.5.1",
     "@tsconfig/node20": "^20.1.6",
     "dotenv": "^17.2.1",
+    "node-fetch": "2",
     "ts-node": "^10.9.2",
     "tsx": "^4.20.3"
   }
