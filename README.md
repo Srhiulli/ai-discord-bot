@@ -8,8 +8,9 @@ rag-discord-bot/
 ├── src/
 │   ├── bot.ts          # Código principal do bot Discord (escuta mensagens e responde)
 │   ├── rag.ts          # Pipeline RAG: busca contexto e chama Bedrock para resposta
-│   ├── opensearch.ts   # Configuração do cliente OpenSearch e funções de busca/indexação
+│   ├── opensearch.ts   # Configuração do cliente OpenSearch
 │   ├── embeddings.ts   # Função para gerar embeddings dos textos (a implementar)
+│   ├── index.ts        # Executar a função de adicionar datos no OpenSearch
 ├── .env                # Variáveis de ambiente (token Discord, senha OpenSearch, etc)
 ├── package.json        # Dependências e scripts do projeto Node.js
 ├── README.md           # Documentação do projeto
@@ -26,10 +27,13 @@ rag-discord-bot/
   Pipeline RAG: busca contexto e chama Bedrock para resposta.
 
 - **src/opensearch.ts**  
-  Configuração do cliente OpenSearch e funções de busca/indexação.
+  Configuração do cliente OpenSearch.
 
 - **src/embeddings.ts**  
   Função para gerar embeddings dos textos (a implementar).
+
+- **src/index.faqs.ts**  
+  Executar a função de adicionar datos no OpenSearch.
 
 - **.env**  
   Variáveis de ambiente (token Discord, senha OpenSearch, etc).
@@ -63,7 +67,11 @@ docker run -d \
 
 3.	Configure .env com suas credenciais.
 
+4.  Crie os documentos no OpenSearch
+```bash
+yarn index-faqs
 
-4.	Rode o bot:
+5.	Rode o bot:
  ```bash
-node src/bot.ts
+yarn dev 
+
