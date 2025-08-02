@@ -4,6 +4,7 @@ Projeto para integrar um bot Discord com pipeline RAG usando OpenSearch e Bedroc
 
 ## Estrutura de pastas
 
+```
 rag-discord-bot/
 ├── src/
 │   ├── bedrock.ts        # Faz chamadas autenticadas para a API da AWS Bedrock
@@ -15,6 +16,7 @@ rag-discord-bot/
 │   ├── rag.ts            # Pipeline RAG: busca e geração de resposta
 │   ├── test-search.ts    # Busca por similaridade para testes
 ├── .env                  # Token do Discord, URL/senha do OpenSearch, etc.
+```
 
 
 ## Variáveis de ambiente (.env)
