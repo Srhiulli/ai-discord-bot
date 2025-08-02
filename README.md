@@ -1,6 +1,6 @@
-# RAG Discord Bot
+# Discord Bot com busca por similaridade no OS
 
-Projeto para integrar um bot Discord com pipeline RAG usando OpenSearch e Bedrock.
+Projeto para integrar um bot do Discord com o Bedrock, utilizando busca por similaridade para fornecer contexto nas respostas.
 
 ## Estrutura de pastas
 
@@ -32,44 +32,42 @@ AWS_REGION=us-east-1
 ## Setup rápido
 
 1. Instale dependências:
- ```bash
- yarn install
-
+```bash
+yarn install
+```
 2.	Rode OpenSearch local via Docker:
+```bash
 docker compose up -d
-
+```
 3.	Configure .env com suas credenciais.
 
 4.  Crie os documentos no OpenSearch
 ```bash
 yarn index:data
-
+```
 5. Teste a busca por similaridade
 ```bash
 yarn search:similar
-
+```
 5.	Rode o bot:
- ```bash
+```bash
 yarn dev 
 ```
 
-  ## Como configurar o bot no Discord
-	1.	Acesse: https://discord.com/developers/applications
-	2.	Clique em “New Application”, dê um nome e clique em “Create”
-	3.	No menu lateral, vá em “Bot” > clique em “Add Bot”
-	4.	Ative a opção “Message Content Intent”
-	5.	Copie o Token do Bot e coloque no .env:
+## Como configurar o bot no Discord
+1.	Acesse: https://discord.com/developers/applications
+2.	Clique em “New Application”, dê um nome e clique em “Create”
+3.	No menu lateral, vá em “Bot” > clique em “Add Bot”
+4.	Ative a opção “Message Content Intent”
+5.	Copie o Token do Bot e coloque no .env:`DISCORD_BOT_TOKEN=seu_token_aqui`
+6.	Vá em “OAuth2” > “URL Generator”
+	-	Scopes: bot
+	-	Bot permissions: Send Messages, Read Message History
+7.	Copie o link gerado, cole no navegador e adicione o bot ao seu servidor
 
-  DISCORD_BOT_TOKEN=seu_token_aqui
-
-  6.	Vá em “OAuth2” > “URL Generator”
-	•	Scopes: bot
-	•	Bot permissions: Send Messages, Read Message History
-	7.	Copie o link gerado, cole no navegador e adicione o bot ao seu servidor
-
-  ## Como funciona a busca por similaridade
-	1.	O bot recebe uma pergunta do usuário no Discord.
-	2.	A pergunta é transformada em um vetor numérico (embedding).
-	3.	Esse vetor é comparado com os vetores dos documentos no OpenSearch.
-	4.	O OpenSearch retorna os documentos mais similares com base na distância vetorial.
-	5.	O conteúdo retornado é enviado para a IA gerar uma resposta com base no contexto encontrado.
+## Como funciona a busca por similaridade
+1.	O bot recebe uma pergunta do usuário no Discord.
+2.	A pergunta é transformada em um vetor numérico (embedding).
+3.	Esse vetor é comparado com os vetores dos documentos no OpenSearch.
+4.	O OpenSearch retorna os documentos mais similares com base na distância vetorial.
+5.	O conteúdo retornado é enviado para a IA gerar uma resposta com base no contexto encontrado.
