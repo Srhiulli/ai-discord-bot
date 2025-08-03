@@ -7,7 +7,7 @@ Projeto para integrar um bot do Discord com o Bedrock, utilizando busca por simi
 ```
 rag-discord-bot/
 ├── src/
-│   ├── bedrock.ts        # Faz chamadas autenticadas para a API da AWS Bedrock
+│   ├── bedrock.ts        # Faz chamadas autenticadas o Bedrock
 │   ├── bot.ts            # Código principal do bot Discord
 │   ├── embeddings.ts     # Gera embeddings para perguntas e documentos
 │   ├── index-faqs.ts     # Indexa as FAQs com embeddings no OpenSearch
@@ -15,6 +15,7 @@ rag-discord-bot/
 │   ├── opensearch.ts     # Cliente OpenSearch + funções de indexação e busca semântica
 │   ├── rag.ts            # Pipeline RAG: busca e geração de resposta
 │   ├── test-search.ts    # Busca por similaridade para testes
+│   ├── index-bedrock.ts  # Script para enviar prompt ao Bedrock
 ├── .env                  # Token do Discord, URL/senha do OpenSearch, etc.
 ```
 
@@ -49,7 +50,11 @@ yarn index:data
 ```bash
 yarn search:similar
 ```
-5.	Rode o bot:
+6. Teste a respoosta do Bedrock
+```bash
+yarn call:bedrock
+```
+7.	Rode o bot:
 ```bash
 yarn dev 
 ```
