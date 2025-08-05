@@ -27,11 +27,8 @@ client.on('messageCreate', async (message) => {
     return;
   }
 
-  console.log(`Pergunta recebida: ${question}`);
-
   try {
-      const answer = await getAnswer(question);
-      console.log(`Resposta gerada: ${answer}`);
+    const answer = await getAnswer(question);
     await message.channel.send(answer);
   } catch (error) {
     console.error('Erro ao processar mensagem:', error);

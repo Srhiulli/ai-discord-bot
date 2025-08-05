@@ -14,7 +14,8 @@ export async function getAnswer(prompt: string): Promise<string> {
     console.log("🧠 Chamando o Bedrock com contexto...");
     const answer = await callBedrockClaude(prompt, context);
 
-    console.log("✅ Resposta gerada com sucesso!", answer);
+    if(!answer) return "Desculpe, não consegui encontrar uma resposta para sua pergunta.";
+
     return answer;
   } catch (error) {
     console.error("❌ Erro ao obter resposta:", error);
