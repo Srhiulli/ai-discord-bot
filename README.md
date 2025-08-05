@@ -64,15 +64,25 @@ yarn dev
 ```
 
 ## Como configurar o bot no Discord
-1.	Acesse: https://discord.com/developers/applications
-2.	Clique em “New Application”, dê um nome e clique em “Create”
-3.	No menu lateral, vá em “Bot” > clique em “Add Bot”
-4.	Ative a opção “Message Content Intent”
-5.	Copie o Token do Bot e coloque no .env:`DISCORD_BOT_TOKEN=seu_token_aqui`
-6.	Vá em “OAuth2” > “URL Generator”
+
+1. Acesse: [https://discord.com/developers/applications](https://discord.com/developers/applications)
+2. Clique em **"New Application"**, dê um nome e clique em **"Create"**
+3. No menu lateral, vá em **"Bot"** > clique em **"Add Bot"**
+4. Ative a opção **"MESSAGE CONTENT INTENT"** (em *Privileged Gateway Intents*)
+5. Copie o **Token do Bot** e adicione no seu arquivo `.env`:
+   ```env
+   DISCORD_BOT_TOKEN=seu_token_aqui
+   ```
+6.	Vá em **“OAuth2” > “URL Generator”**
 	-	Scopes: bot
-	-	Bot permissions: Send Messages, Read Message History
+	-	Bot Permissions (mínimo necessário):
+	-	✅ Read Messages/View Channels
+	-	✅ Send Messages
+	-	✅ Read Message History
+	-	✅ Mention Everyone (opcional)
+	-	✅ Use Slash Commands (opcional)
 7.	Copie o link gerado, cole no navegador e adicione o bot ao seu servidor
+
 
 ## Como funciona a busca por similaridade
 1.	O bot recebe uma pergunta do usuário no Discord.
