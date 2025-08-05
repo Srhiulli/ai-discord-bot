@@ -1,6 +1,7 @@
 import { Client, GatewayIntentBits } from 'discord.js';
-import { answerWithRAG } from ''; 
+
 import dotenv from 'dotenv';
+import { getAnswer } from './answer';
 dotenv.config();
 
 const client = new Client({
@@ -14,10 +15,23 @@ client.once('ready', () => {
 client.on('messageCreate', async (message) => {
   if (message.author.bot) return;
 
-  const question = message.content;
+  const botId = client.user?.id;
+  const isMentioned = message.mentions.has(botId || '');
+
+  if (!isMentioned) return;
+
+  const question = message.content.replace(`<@!${botId}>`, '').trim();
+
+  if (typeof question !== 'string' || question.length === 0) {
+    await message.channel.send('Ainda não consigo entender nada além de textos :(');
+    return;
+  }
+
+  console.log(`Pergunta recebida: ${question}`);
 
   try {
-    const answer = await answerWithRAG(question);
+      const answer = await getAnswer(question);
+      console.log(`Resposta gerada: ${answer}`);
     await message.channel.send(answer);
   } catch (error) {
     console.error('Erro ao processar mensagem:', error);
