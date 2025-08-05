@@ -12,6 +12,7 @@
     "index:data": "tsx ./src/index-faqs.ts",
     "search:similar": "tsx --inspect ./src/test-search.ts",
     "call:bedrock": "tsx --inspect ./src/test-bedrock.ts",
+    "call:answer": "tsx --inspect ./src/answer.ts",
     "embbedings:get": "tsx ./src/embeddings.ts",
     "build": "tsc",
     "build:watch": "tsc --watch"

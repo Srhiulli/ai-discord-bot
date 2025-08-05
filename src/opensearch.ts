@@ -203,8 +203,8 @@ export async function searchSimilarDocs(question: string) {
 
   return body.hits.hits.map(hit => ({
     score: hit._score,
-    question: hit._source.pergunta,
-    answer: hit._source.resposta
+    question: hit._source?.pergunta,
+    answer: hit._source?.resposta
   }));
 
 }

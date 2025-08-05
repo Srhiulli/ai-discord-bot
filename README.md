@@ -13,7 +13,7 @@ rag-discord-bot/
 │   ├── index-faqs.ts     # Indexa as FAQs com embeddings no OpenSearch
 │   ├── index.ts          # Entry point opcional para testes
 │   ├── opensearch.ts     # Cliente OpenSearch + funções de indexação e busca semântica
-│   ├── rag.ts            # Pipeline RAG: busca e geração de resposta
+│   ├── answer.ts         # Une a pergunta, com o contexto do OpenSearch enviando ao bedrock que responde
 │   ├── test-search.ts    # Busca por similaridade para testes
 │   ├── index-bedrock.ts  # Script para enviar prompt ao Bedrock
 ├── .env                  # Token do Discord, URL/senha do OpenSearch, etc.
@@ -54,7 +54,11 @@ yarn search:similar
 ```bash
 yarn call:bedrock
 ```
-7.	Rode o bot:
+7. Teste a respoosta do Bedrock cmo o contexto do OpenSearch
+```bash
+yarn call:answer
+```
+8.	Rode o bot:
 ```bash
 yarn dev 
 ```
