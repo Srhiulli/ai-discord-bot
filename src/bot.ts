@@ -23,7 +23,7 @@ client.on('messageCreate', async (message) => {
   const question = message.content.replace(`<@!${botId}>`, '').trim();
 
   if (typeof question !== 'string' || question.length === 0) {
-    await message.channel.send('Ainda não consigo entender nada além de textos :(');
+    await message.channel.send('Ainda não consigo entender nada além de textos :(. Mas você pode tentar perguntar algo como "Qual é a taxa de juros do CDI?"');
     return;
   }
 
