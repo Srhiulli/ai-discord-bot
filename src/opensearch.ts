@@ -3,6 +3,9 @@ dotenv.config();
 
 import { Client } from '@opensearch-project/opensearch';
 import fetch from 'node-fetch'; 
+import path from 'path';
+import { spawn } from 'child_process';
+import { fileURLToPath } from 'url';
 
 export const client = new Client({
   node: 'https://localhost:9200',
@@ -38,7 +41,7 @@ export async function testDashboards(): Promise<void> {
   }
 }
 
-export async function getEmbedding(text: string): Promise<number[]> {
+export async function OLDgetEmbedding(text: string): Promise<number[]> {
   const length = text.length;
   const wordCount = text.split(/\s+/).length;
   const hasQuestionMark = text.includes('?') ? 1 : -1;
@@ -49,6 +52,37 @@ export async function getEmbedding(text: string): Promise<number[]> {
     length / (wordCount + 1),
     hasQuestionMark
   ];
+}
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+export async function getEmbedding(text: string): Promise<number[]> {
+  return new Promise((resolve, reject) => {
+    const scriptPath = path.resolve(__dirname, './python/embed.py');
+    const py = spawn('../.venv/bin/python', [scriptPath, text]);
+
+    let result = '';
+    let error = '';
+
+    py.stdout.on('data', (data) => {
+      result += data.toString();
+    });
+
+    py.stderr.on('data', (err) => {
+      error += err.toString();
+    });
+
+    py.on('close', (code) => {
+      if (code !== 0) return reject(new Error(error));
+      try {
+        const parsed = JSON.parse(result);
+        resolve(parsed);
+      } catch (e) {
+        reject(e);
+      }
+    });
+  });
 }
 
 export async function createFaqIndex() {
@@ -67,7 +101,7 @@ export async function createFaqIndex() {
           properties: {
             embedding: {
               type: 'knn_vector',
-              dimension: 4
+              dimension: 384
             },
             pergunta: { type: 'text' },
             resposta: { type: 'text' }
@@ -194,7 +228,7 @@ export async function searchSimilarDocs(question: string) {
         knn: {
           embedding: {
             vector: queryVector,
-            k: 3
+            k: 5
           }
         }
       }
