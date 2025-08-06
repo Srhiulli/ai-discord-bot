@@ -60,7 +60,7 @@ const __dirname = path.dirname(__filename);
 export async function getEmbedding(text: string): Promise<number[]> {
   return new Promise((resolve, reject) => {
     const scriptPath = path.resolve(__dirname, './python/embed.py');
-    const py = spawn('../.venv/bin/python', [scriptPath, text]);
+    const py = spawn('./.venv/bin/python', [scriptPath, text]);
 
     let result = '';
     let error = '';
