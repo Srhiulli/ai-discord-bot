@@ -243,6 +243,38 @@ export async function searchSimilarDocs(question: string) {
 
 }
 
+export async function indexDiscordMessages(data: any[], indexName: string) {
+  const exists = await client.indices.exists({ index: indexName });
+  if (!exists.body) {
+    await createFaqIndex(); 
+  }
+
+  const batchSize = 300; 
+  for (let i = 0; i < data.length; i += batchSize) {
+    const slice = data.slice(i, i + batchSize);
+
+    const bulkActions = slice.flatMap(doc => [
+      { index: { _index: indexName, _id: doc.id } },
+      doc
+    ]);
+
+    const { body: bulkResponse } = await client.bulk({
+      body: bulkActions,
+      refresh: false 
+    });
+
+    if (bulkResponse.errors) {
+      const erroredItems = bulkResponse.items.filter(item => item.index?.error);
+      console.error(`❌ Erros na indexação no lote ${i / batchSize + 1}:`, erroredItems);
+    } else {
+      console.log(`✅ Lote ${i / batchSize + 1} indexado com sucesso (${slice.length} docs)`);
+    }
+  }
+
+  await client.indices.refresh({ index: indexName });
+}
+
+
 
 
 (async () => {

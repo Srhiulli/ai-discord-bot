@@ -8,7 +8,7 @@
   ],
   "private": true,
   "scripts": {
-    "dev": "tsx --watch --inspect ./src/bot.ts",
+    "dev": "tsx --watch --inspect src/bot/service/bot.ts",
     "index:data": "tsx ./src/index-faqs.ts",
     "search:similar": "tsx --inspect ./src/test-search.ts",
     "call:bedrock": "tsx --inspect ./src/test-bedrock.ts",
