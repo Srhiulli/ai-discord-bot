@@ -1,3 +1,3 @@
-import { indexFaqData } from './opensearch';
+// import { indexFaqData } from './opensearch';
 
-indexFaqData();           
+// indexFaqData();           

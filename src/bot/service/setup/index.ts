@@ -2,7 +2,8 @@ import { Message, TextChannel } from 'discord.js';
 import {  markChannelProcessed } from "../../../processedChannels";
 import { setupMessages } from "../../readyMessages";
 import fs from 'fs';
-import { getEmbedding, indexDiscordMessages } from '../../../opensearch';
+import { createIndex, getEmbedding, indexDiscordMessages } from '../../../opensearch';
+import { channel } from 'diagnostics_channel';
 
 const PROCESSED_FILE = 'processed_channels.json';
 let processedChannels: string[] = [];
@@ -98,20 +99,39 @@ export async function handleRefusedSetup(channel: TextChannel): Promise<void> {
   await channel.send(setupMessages.declinedNext);
 }
 
-export async function handleIndexNameInput(channel: TextChannel, filter: (m: Message) => boolean): Promise<void> {
-  const nameCollector = channel.createMessageCollector({ 
-    filter, 
-    time: 60000, 
-    max: 1 
+async function CreateIndex(indexName: string, channel: TextChannel) {
+  const response = await createIndex(indexName, channel.id);
+
+  if (!response) return { success: false };
+
+  if (response.success) return { success: true };
+
+  if (response.duplicatedIndex) return { success: false, retry: true, message: response.message };
+
+  return { success: false, message: response.message };
+}
+
+export async function handleIndexNameInput(
+  channel: TextChannel,
+  filter: (m: Message) => boolean
+): Promise<void> {
+  const nameCollector = channel.createMessageCollector({
+    filter,
+    time: 60000,
   });
 
-  nameCollector.on('collect', async (msg: Message) => {
+  nameCollector.on("collect", async (msg: Message) => {
     const indexName = msg.content.trim();
+    const result = await CreateIndex(indexName, channel);
 
-    if (!indexName) {
-      await channel.send(setupMessages.invalidIndex);
+    if (msg.author.bot) return
+
+    if (!result.success) {
+      await channel.send(result.message || "❌ Erro ao criar índice.");
       return;
     }
+
+    nameCollector.stop();
 
     processedChannels.push(channel.id);
     saveProcessedChannels();

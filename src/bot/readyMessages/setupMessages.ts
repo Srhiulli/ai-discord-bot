@@ -4,7 +4,7 @@ export const setupMessages = {
   declined: `❌ Entendido, histórico do chat não será indexado, caso mude de ideia, é só reiniciar o bot.`,
   declinedNext: `💬 Para me fazer uma pergunta, mencione-me e escreva sua dúvida.`,
   indexAsk: `✏️ Digite o nome do índice para criar no OpenSearch:`,
-  invalidIndex: `❌ Nome inválido.`,
+  emptyIndex: `❌ Nome do índice não pode ser vazio. Tente novamente.`,
   indexing: (indexName: string) => `⏳ Iniciando extração e indexação para o índice **${indexName}**...`,
   indexed: (indexName: string) => `✅ Indexação concluída no índice **${indexName}**!`,
 };

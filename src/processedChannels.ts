@@ -23,24 +23,24 @@ export async function isChannelProcessed(channelId: string): Promise<{ processed
   const processed = first._source?.processed ?? false;
   const id = first._id;
 
-  console.log(`🔍 Verificando canal processado (${channelId}):`, { id, processed });
-
   return { processed, id };
 }
 
 export async function markChannelProcessed(channelId: string): Promise<void> {
   try {
-    const exists = await isChannelProcessed(channelId);
-    if (exists) return;
-
-    await client.index({
+    await client.update({
       index: INDEX,
+      id: channelId,
       body: {
-        channelId,
-        processed: true,
-        processedAt: new Date().toISOString()
+        doc: {
+          channelId,
+          processed: true,
+          processedAt: new Date().toISOString()
+        },
+        doc_as_upsert: true
       }
     });
+
   } catch (error) {
     console.error(`❌ Erro ao marcar canal como processado (${channelId}):`, error);
   }
