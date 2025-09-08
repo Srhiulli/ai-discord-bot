@@ -1,5 +1,5 @@
 import { Message, TextChannel } from 'discord.js';
-import { handleIndexNameInput, handleRefusedSetup } from '../setup';
+import { handleNameToCreateIndex, handleRefusedSetup } from '../setup';
 import { setupMessages } from '../../readyMessages';
 import { isChannelProcessed } from '../../../processedChannels';
 
@@ -18,7 +18,7 @@ async function handleSetupResponse(
 
   if (content === 'sim') {
     await channel.send(setupMessages.indexAsk);
-    await handleIndexNameInput(channel, filter);
+    await handleNameToCreateIndex(channel, filter);
     return true;
   }
 

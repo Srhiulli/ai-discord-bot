@@ -5,9 +5,6 @@ import fs from 'fs';
 import { createIndex, getEmbedding, indexDiscordMessages } from '../../../opensearch';
 import { channel } from 'diagnostics_channel';
 
-const PROCESSED_FILE = 'processed_channels.json';
-let processedChannels: string[] = [];
-
 interface RawMessage {
   id: string;
   question: string;
@@ -29,10 +26,6 @@ function chunkText(text: string, maxLen = 1000): string[] {
     chunks.push(text.slice(i, i + maxLen));
   }
   return chunks;
-}
-
-function saveProcessedChannels(): void {
-  fs.writeFileSync(PROCESSED_FILE, JSON.stringify(processedChannels, null, 2));
 }
 
 function cleanMessageContent(content: string): string {
@@ -99,7 +92,7 @@ export async function handleRefusedSetup(channel: TextChannel): Promise<void> {
   await channel.send(setupMessages.declinedNext);
 }
 
-async function CreateIndex(indexName: string, channel: TextChannel) {
+async function handleCreateIndex(indexName: string, channel: TextChannel) {
   const response = await createIndex(indexName, channel.id);
 
   if (!response) return { success: false };
@@ -111,7 +104,7 @@ async function CreateIndex(indexName: string, channel: TextChannel) {
   return { success: false, message: response.message };
 }
 
-export async function handleIndexNameInput(
+export async function handleNameToCreateIndex(
   channel: TextChannel,
   filter: (m: Message) => boolean
 ): Promise<void> {
@@ -122,7 +115,7 @@ export async function handleIndexNameInput(
 
   nameCollector.on("collect", async (msg: Message) => {
     const indexName = msg.content.trim();
-    const result = await CreateIndex(indexName, channel);
+    const result = await handleCreateIndex(indexName, channel);
 
     if (msg.author.bot) return
 
@@ -132,9 +125,6 @@ export async function handleIndexNameInput(
     }
 
     nameCollector.stop();
-
-    processedChannels.push(channel.id);
-    saveProcessedChannels();
 
     await channel.send(setupMessages.indexing(indexName));
 
