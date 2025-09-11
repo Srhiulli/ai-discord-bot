@@ -4,6 +4,7 @@ import { setupMessages } from "../../readyMessages";
 import fs from 'fs';
 import { createIndex, getEmbedding, indexDiscordMessages } from '../../../opensearch';
 import { channel } from 'diagnostics_channel';
+import pLimit from 'p-limit';
 
 interface RawMessage {
   id: string;
@@ -14,7 +15,6 @@ interface RawMessage {
 interface ChunkedMessage {
   id: string;
   pergunta: string;
-  resposta: string;
   embedding: number[];
 }
 
@@ -40,7 +40,7 @@ function cleanMessageContent(content: string): string {
 async function fetchChannelMessages(channel: TextChannel): Promise<RawMessage[]> {
   const allMessages: Message[] = [];
   let lastMessageId: string | undefined;
-
+console.log("fetchChannelMessages channel",channel.id);
   while (true) {
     const batch = await channel.messages.fetch({
       limit: 100,
@@ -52,36 +52,61 @@ async function fetchChannelMessages(channel: TextChannel): Promise<RawMessage[]>
     allMessages.push(...batch.values());
     lastMessageId = batch.last()?.id;
   }
-
+console.log(`Fetched ${allMessages.length} messages from channel ${channel.id}`);
   return allMessages
     .sort((a, b) => a.createdTimestamp - b.createdTimestamp)
     .map((msg, index) => ({
-      id: `faq${index + 1}`,
+      id: `s${index + 1}`,
       question: cleanMessageContent(msg.content),
       answer: '',
     }));
 }
 
 async function prepareMessagesForIndexing(channel: TextChannel): Promise<ChunkedMessage[]> {
+  await channel.send("⏳ Iniciando o processamento das mensagens para geração de embeddings... Isso pode levar algum tempo dependendo do volume de mensagens. Conforme progressos forem feitos, vou te atualizando aqui.");
   const rawMessages = await fetchChannelMessages(channel);
-  const chunked: ChunkedMessage[] = [];
+
+  const concurrency = 5; 
+  const queue: (() => Promise<ChunkedMessage>)[] = [];
 
   for (const [index, msg] of rawMessages.entries()) {
     if (!msg.question || msg.question.length < 15) continue;
 
     const chunks = chunkText(msg.question);
     for (let chunkIndex = 0; chunkIndex < chunks.length; chunkIndex++) {
-      const embedding = await getEmbedding(chunks[chunkIndex]);
-      chunked.push({
-        id: `msg${index + 1}_chunk${chunkIndex + 1}`,
-        pergunta: chunks[chunkIndex],
-        resposta: '',
-        embedding,
+      const chunk = chunks[chunkIndex];
+      queue.push(async () => {
+        const embedding = await getEmbedding(chunk);
+        return {
+          id: `msg${index + 1}_chunk${chunkIndex + 1}`,
+          pergunta: chunk,
+          embedding,
+        };
       });
     }
   }
 
-  return chunked;
+  const results: ChunkedMessage[] = [];
+  const total = queue.length;
+  let processed = 0;
+  let nextMilestone = 25; 
+
+  while (queue.length > 0) {
+    const batch = queue.splice(0, concurrency).map(fn => fn());
+    const settled = await Promise.all(batch);
+    results.push(...settled);
+
+    processed += settled.length;
+    const progress = Math.floor((processed / total) * 100);
+
+    if (progress >= nextMilestone) {
+      await channel.send(`📊 Progresso: ${progress}% concluído (${processed}/${total})`);
+      nextMilestone += 25;
+    }
+  }
+
+  await channel.send("✅ Processamento concluído. Todos os embeddings foram gerados!");
+  return results;
 }
 
 // ========== SETUP HANDLERS ==========
@@ -92,45 +117,84 @@ export async function handleRefusedSetup(channel: TextChannel): Promise<void> {
   await channel.send(setupMessages.declinedNext);
 }
 
-async function handleCreateIndex(indexName: string, channel: TextChannel) {
-  const response = await createIndex(indexName, channel.id);
-
-  if (!response) return { success: false };
-
-  if (response.success) return { success: true };
-
-  if (response.duplicatedIndex) return { success: false, retry: true, message: response.message };
-
-  return { success: false, message: response.message };
+async function handleIndexDiscordMessages(messagesToIndex:any, indexName:string) {
+  try {
+    const result = await indexDiscordMessages(messagesToIndex, indexName);
+    console.log("Mensagens indexadas com sucesso:", result);
+    return result;
+  }
+  catch (error) {
+    console.error("Erro ao indexar mensagens:", error);
+    throw error;
+  }
 }
 
-export async function handleNameToCreateIndex(
-  channel: TextChannel,
-  filter: (m: Message) => boolean
-): Promise<void> {
-  const nameCollector = channel.createMessageCollector({
-    filter,
-    time: 60000,
-  });
+async function indexMessages(channel: TextChannel, indexName : string): Promise<void> { 
+  try {
+    const messagesToIndex = await prepareMessagesForIndexing(channel);
 
-  nameCollector.on("collect", async (msg: Message) => {
-    const indexName = msg.content.trim();
-    const result = await handleCreateIndex(indexName, channel);
+    await handleIndexDiscordMessages(messagesToIndex, indexName) 
 
-    if (msg.author.bot) return
+  } catch (error: any) {
+    console.error("❌ Erro ao preparar mensagens:", error);
+    await channel.send("❌ Erro ao preparar mensagens para indexação.");
+  }
+}
 
-    if (!result.success) {
-      await channel.send(result.message || "❌ Erro ao criar índice.");
-      return;
+async function createIndexHandler(indexName: string, channel: TextChannel) {
+  try {
+    const response = await createIndex(indexName, channel.id);
+    console.log("createIndexHandler resposta de createIndex",response);
+    if (!response) {
+      return { success: false, message: "Resposta inválida ao criar índice." };
     }
 
-    nameCollector.stop();
+    if (response.duplicatedIndex) {
+      return { success: false, retry: true, message: response.message };
+    }
+    await indexMessages(channel, indexName);
+    return { success: true, message: "✅ Índice criado com sucesso." };
 
-    await channel.send(setupMessages.indexing(indexName));
+  } catch (error: any) {
+    console.error("❌ Erro ao criar índice:", error);
+    return {
+      success: false,
+      message: error?.message || "Erro inesperado ao criar índice.",
+    };
+  }
+}
 
-    const messages = await prepareMessagesForIndexing(channel);
-    await indexDiscordMessages(messages, indexName);
+async function processIndexName(msg: Message, channel: TextChannel) {
+  try {
+    const indexName = msg.content.trim();
+    const result = await createIndexHandler(indexName, channel);
 
-    await channel.send(setupMessages.indexed(indexName));
+    if(result.success) await channel.send(`Preparando mensagens para indexação... Index nomedado de: **${indexName}**`);
+    console.log("processIndexName resposta de createIndexHandler",result);
+    return result.success;
+  } catch (error: any) { 
+    console.error("❌ Erro ao processar processIndexName:", error);
+    await channel.send("❌ Erro ao processar sua solicitação.");
+    return false;
+  }
+}
+
+export async function collectIndexName(channel: TextChannel, filter: (m: Message) => boolean) {
+  const collector = channel.createMessageCollector({ filter, time: 60_000 });
+
+  collector.on("collect", async (msg: Message) => {
+
+    try {
+      if (msg.author.bot) return;
+      const success = await processIndexName(msg, channel);
+      console.log("collect resposta de processIndexName",success);
+      await channel.send("Indice criado com sucesso, estou preparando as mensagens do histórico para indexação... Te aviso quando finalizar!");
+      if (success) collector.stop("success");
+    } catch (error: any) {
+      console.error("❌ Erro no collector:", error);
+      await channel.send("❌ Erro ao processar sua solicitação.");
+      collector.stop("error");
+    }
+    
   });
 }

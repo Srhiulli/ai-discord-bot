@@ -105,8 +105,8 @@ export async function createIndex(indexName = 'faq', channelId: string) {
               type: 'knn_vector',
               dimension: 384
             },
+            id: { type: 'keyword' },
             pergunta: { type: 'text' },
-            resposta: { type: 'text' }
           }
         }
       }
@@ -159,6 +159,7 @@ export async function searchSimilarDocs(question: string) {
 }
 
 export async function indexDiscordMessages(data: any[], indexName: string) {
+
   const exists = await client.indices.exists({ index: indexName });
   if (!exists.body) {
     return console.error(`❌ Índice "${indexName}" não existe. Crie o índice antes de indexar dados.`);
