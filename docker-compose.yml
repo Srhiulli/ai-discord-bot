@@ -5,6 +5,8 @@ services:
     image: opensearchproject/opensearch:latest
     container_name: opensearch
     env_file: .env
+    cpus: 2          
+    mem_limit: 4g    
     ulimits:
       memlock:
         soft: -1
@@ -22,6 +24,8 @@ services:
     container_name: opensearch-dashboards
     depends_on:
       - opensearch
+    cpus: 1         
+    mem_limit: 1g
     ports:
       - 5601:5601
     env_file: .env
