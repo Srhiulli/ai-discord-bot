@@ -9,7 +9,6 @@ import pLimit from 'p-limit';
 interface RawMessage {
   id: string;
   question: string;
-  answer: string;
 }
 
 interface ChunkedMessage {
@@ -58,7 +57,6 @@ console.log(`Fetched ${allMessages.length} messages from channel ${channel.id}`)
     .map((msg, index) => ({
       id: `s${index + 1}`,
       question: cleanMessageContent(msg.content),
-      answer: '',
     }));
 }
 

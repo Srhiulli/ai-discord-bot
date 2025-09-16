@@ -4,7 +4,7 @@ dotenv.config();
 import { Client } from '@opensearch-project/opensearch';
 import fetch from 'node-fetch'; 
 import path from 'path';
-import { spawn } from 'child_process';
+import { ChildProcessWithoutNullStreams, spawn } from 'child_process';
 import { fileURLToPath } from 'url';
 import { ERROR_OS } from './error_os_map';
 import { markChannelProcessed } from './processedChannels';
@@ -43,47 +43,70 @@ export async function testDashboards(): Promise<void> {
   }
 }
 
-export async function OLDgetEmbedding(text: string): Promise<number[]> {
-  const length = text.length;
-  const wordCount = text.split(/\s+/).length;
-  const hasQuestionMark = text.includes('?') ? 1 : -1;
-  
-  return [
-    Math.sin(length),
-    Math.cos(wordCount),
-    length / (wordCount + 1),
-    hasQuestionMark
-  ];
-}
-
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+let pyProcess: ChildProcessWithoutNullStreams | null = null;
+
+export function startEmbeddingServer(): void {
+  if (pyProcess) return;
+  
+  const scriptPath = path.resolve(__dirname, './python/embed_server.py');
+  pyProcess = spawn('./.venv/bin/python', [scriptPath]);
+  
+  pyProcess.stderr.on('data', (data) => {
+    console.error('Python Server Error:', data.toString());
+  });
+  
+  pyProcess.on('close', () => {
+    pyProcess = null;
+  });
+}
+
 export async function getEmbedding(text: string): Promise<number[]> {
   return new Promise((resolve, reject) => {
-    const scriptPath = path.resolve(__dirname, './python/embed.py');
-    const py = spawn('./.venv/bin/python', [scriptPath, text]);
+    if (!pyProcess) {
+      startEmbeddingServer();
+      setTimeout(() => getEmbedding(text).then(resolve).catch(reject), 100);
+      return;
+    }
+    
+    const request = JSON.stringify({ action: 'embed', text });
+    pyProcess!.stdin.write(request + '\n');
+    
+    const timeout = setTimeout(() => {
+      reject(new Error('Embedding timeout'));
+    }, 30000);
+    
+let buffer = '';
 
-    let result = '';
-    let error = '';
+const onData = (data: Buffer) => {
+  buffer += data.toString();
 
-    py.stdout.on('data', (data) => {
-      result += data.toString();
-    });
+  let index;
+  while ((index = buffer.indexOf('\n')) >= 0) {
+    const line = buffer.slice(0, index).trim();
+    buffer = buffer.slice(index + 1);
 
-    py.stderr.on('data', (err) => {
-      error += err.toString();
-    });
+    if (!line) continue;
 
-    py.on('close', (code) => {
-      if (code !== 0) return reject(new Error(error));
-      try {
-        const parsed = JSON.parse(result);
-        resolve(parsed);
-      } catch (e) {
-        reject(e);
+    try {
+      const response = JSON.parse(line);
+      if (response.error) {
+        reject(new Error(response.error));
+      } else {
+        clearTimeout(timeout);
+        pyProcess!.stdout.off('data', onData); 
+        resolve(response.embedding);
       }
-    });
+    } catch (e) {
+    }
+  }
+};
+
+pyProcess!.stdout.on('data', onData);
+    
+    pyProcess!.stdout.once('data', onData);
   });
 }
 
