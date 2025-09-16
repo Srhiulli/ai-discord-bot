@@ -65,7 +65,7 @@ console.log(`Fetched ${allMessages.length} messages from channel ${channel.id}`)
 async function prepareMessagesForIndexing(channel: TextChannel): Promise<ChunkedMessage[]> {
   await channel.send("⏳ Iniciando o processamento das mensagens para geração de embeddings... Isso pode levar algum tempo dependendo do volume de mensagens. Conforme progressos forem feitos, vou te atualizando aqui.");
   const rawMessages = await fetchChannelMessages(channel);
-
+console.log("Total rawMessages fetched:", rawMessages);
   const concurrency = 5; 
   const queue: (() => Promise<ChunkedMessage>)[] = [];
 
@@ -144,19 +144,15 @@ async function indexMessages(channel: TextChannel, indexName : string): Promise<
 async function createIndexHandler(indexName: string, channel: TextChannel) {
   try {
     const response = await createIndex(indexName, channel.id);
-    console.log("createIndexHandler resposta de createIndex",response);
-    if (!response) {
-      return { success: false, message: "Resposta inválida ao criar índice." };
-    }
+    if (!response) throw new Error(response);
 
-    if (response.duplicatedIndex) {
-      return { success: false, retry: true, message: response.message };
-    }
+    if (response.duplicatedIndex) throw new Error(response.message);
+
     await indexMessages(channel, indexName);
+    
     return { success: true, message: "✅ Índice criado com sucesso." };
 
   } catch (error: any) {
-    console.error("❌ Erro ao criar índice:", error);
     return {
       success: false,
       message: error?.message || "Erro inesperado ao criar índice.",
@@ -169,12 +165,12 @@ async function processIndexName(msg: Message, channel: TextChannel) {
     const indexName = msg.content.trim();
     const result = await createIndexHandler(indexName, channel);
 
-    if(result.success) await channel.send(`Preparando mensagens para indexação... Index nomedado de: **${indexName}**`);
-    console.log("processIndexName resposta de createIndexHandler",result);
+    if (result.success) await channel.send(`Preparando mensagens para indexação... Index nomedado de: **${indexName}**`);
+    if (!result.success) throw new Error(result.message)
+    
     return result.success;
+
   } catch (error: any) { 
-    console.error("❌ Erro ao processar processIndexName:", error);
-    await channel.send("❌ Erro ao processar sua solicitação.");
     return false;
   }
 }
@@ -187,11 +183,12 @@ export async function collectIndexName(channel: TextChannel, filter: (m: Message
     try {
       if (msg.author.bot) return;
       const success = await processIndexName(msg, channel);
-      console.log("collect resposta de processIndexName",success);
-      await channel.send("Indice criado com sucesso, estou preparando as mensagens do histórico para indexação... Te aviso quando finalizar!");
+
+      if (!success) throw new Error()
       if (success) collector.stop("success");
+
+      await channel.send("Indice criado com sucesso, estou preparando as mensagens do histórico para indexação... Te aviso quando finalizar!")
     } catch (error: any) {
-      console.error("❌ Erro no collector:", error);
       await channel.send("❌ Erro ao processar sua solicitação.");
       collector.stop("error");
     }
