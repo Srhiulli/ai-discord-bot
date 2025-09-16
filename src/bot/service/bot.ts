@@ -35,7 +35,6 @@ client.once('ready', async () => {
   const channel = await fetchTextChannel(CHANNEL_ID);
   if (!channel) throw new Error('❌ Canal não encontrado.');
 
-  await callSetup(channel, Message);
 });
 
 client.on('messageCreate', async (message: Message) => {
@@ -52,7 +51,7 @@ client.on('messageCreate', async (message: Message) => {
   if (!('send' in message.channel)) {console.warn('Canal não suporta envio de mensagem');return;}
 
   if (callHelp) { await helpCommand(message); return; }
-  if (callToSetup) { await CallToSetup(channel, Message, client); return; }
+  if (callToSetup) { await CallToSetup(channel, client); return; }
   
   await askAnswer(question, channel);
 });

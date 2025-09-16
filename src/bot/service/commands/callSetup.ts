@@ -45,21 +45,6 @@ async function startSetupProcess(
     }
   });
 }
-
-export async function callSetup(
-  channel: TextChannel, 
-  client: any
-): Promise<void> {
-  const verifyProcessedChannel = await isChannelProcessed(channel.id);
-  
-    if (verifyProcessedChannel.processed) {
-      console.log(`🔍 Canal ${channel.id} já processado.`);
-    return;
-  }
-
-  await startSetupProcess(channel, client);
-}
-
 export async function CallToSetup(
   channel: TextChannel, 
   client: any
