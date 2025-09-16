@@ -3,8 +3,7 @@ import dotenv from 'dotenv';
 import { generalMessages } from '../readyMessages/index';
 import { helpCommand } from './commands/helpCommand';
 import { askAnswer } from './commands/askAnswer';
-import { CallToSetup, callSetup } from './commands/callSetup';
-import { isChannelProcessed } from '../../processedChannels';
+import { CallToSetup } from './commands/callSetup';
 
 dotenv.config();
 const CHANNEL_ID = process.env.CANAL_ID;
