@@ -65,11 +65,13 @@ console.log(`Fetched ${allMessages.length} messages from channel ${channel.id}`)
 async function prepareMessagesForIndexing(channel: TextChannel): Promise<ChunkedMessage[]> {
   await channel.send("⏳ Iniciando o processamento das mensagens para geração de embeddings... Isso pode levar algum tempo dependendo do volume de mensagens. Conforme progressos forem feitos, vou te atualizando aqui.");
   const rawMessages = await fetchChannelMessages(channel);
-console.log("Total rawMessages fetched:", rawMessages);
+  console.log("Total rawMessages fetched:", rawMessages);
+  
   const concurrency = 5; 
   const queue: (() => Promise<ChunkedMessage>)[] = [];
 
   for (const [index, msg] of rawMessages.entries()) {
+    
     if (!msg.question || msg.question.length < 15) continue;
 
     const chunks = chunkText(msg.question);
@@ -147,10 +149,12 @@ async function createIndexHandler(indexName: string, channel: TextChannel) {
     if (!response) throw new Error(response);
 
     if (response.duplicatedIndex) throw new Error(response.message);
+    
+    await channel.send(`✅ Index: **${indexName}** criado com sucesso`);
 
     await indexMessages(channel, indexName);
-    
-    return { success: true, message: "✅ Índice criado com sucesso." };
+
+    return { success: true};
 
   } catch (error: any) {
     return {
@@ -165,7 +169,7 @@ async function processIndexName(msg: Message, channel: TextChannel) {
     const indexName = msg.content.trim();
     const result = await createIndexHandler(indexName, channel);
 
-    if (result.success) await channel.send(`Preparando mensagens para indexação... Index nomedado de: **${indexName}**`);
+    if (result.success) 
     if (!result.success) throw new Error(result.message)
     
     return result.success;
@@ -187,7 +191,6 @@ export async function collectIndexName(channel: TextChannel, filter: (m: Message
       if (!success) throw new Error()
       if (success) collector.stop("success");
 
-      await channel.send("Indice criado com sucesso, estou preparando as mensagens do histórico para indexação... Te aviso quando finalizar!")
     } catch (error: any) {
       await channel.send("❌ Erro ao processar sua solicitação.");
       collector.stop("error");
