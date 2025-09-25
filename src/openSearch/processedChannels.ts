@@ -1,4 +1,3 @@
-import { Client } from '@opensearch-project/opensearch';
 import { client } from './opensearch';
 
 const INDEX = 'processed_channels';

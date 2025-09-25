@@ -1,5 +1,5 @@
-import { callBedrockClaude } from './bedrock';
-import { searchSimilarDocs } from './opensearch'; 
+import { callBedrockClaude } from '../../../bedrock/bedrock';
+import { searchSimilarDocs } from '../../../openSearch/opensearch';
 
 
 export async function getAnswer(prompt: string): Promise<string> {

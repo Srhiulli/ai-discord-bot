@@ -7,7 +7,7 @@ import path from 'path';
 import { ChildProcessWithoutNullStreams, spawn } from 'child_process';
 import { fileURLToPath } from 'url';
 import { ERROR_OS } from './error_os_map';
-import { markChannelProcessed } from './processedChannels';
+import { markChannelProcessed } from  './processedChannels'
 
 export const client = new Client({
   node: 'https://localhost:9200',
@@ -51,11 +51,11 @@ let pyProcess: ChildProcessWithoutNullStreams | null = null;
 export function startEmbeddingServer(): void {
   if (pyProcess) return;
   
-  const scriptPath = path.resolve(__dirname, './python/embed_server.py');
+  const scriptPath = path.resolve(__dirname, '../python/embedding_server.py');
   pyProcess = spawn('./.venv/bin/python', [scriptPath]);
   
   pyProcess.stderr.on('data', (data) => {
-    console.error('Python Server Error:', data.toString());
+    console.error('Python Server:', data.toString());
   });
   
   pyProcess.on('close', () => {
@@ -63,50 +63,51 @@ export function startEmbeddingServer(): void {
   });
 }
 
+let buffer = "";
+
 export async function getEmbedding(text: string): Promise<number[]> {
   return new Promise((resolve, reject) => {
     if (!pyProcess) {
       startEmbeddingServer();
-      setTimeout(() => getEmbedding(text).then(resolve).catch(reject), 100);
+      setTimeout(() => getEmbedding(text).then(resolve).catch(reject), 500);
       return;
     }
-    
-    const request = JSON.stringify({ action: 'embed', text });
-    pyProcess!.stdin.write(request + '\n');
-    
+
+    const request = JSON.stringify({ action: "embed", text });
+    pyProcess.stdin.write(request + "\n");
+
     const timeout = setTimeout(() => {
-      reject(new Error('Embedding timeout'));
+      reject(new Error("Embedding timeout"));
     }, 30000);
-    
-let buffer = '';
 
-const onData = (data: Buffer) => {
-  buffer += data.toString();
+    const handleData = (data: Buffer) => {
+      buffer += data.toString();
 
-  let index;
-  while ((index = buffer.indexOf('\n')) >= 0) {
-    const line = buffer.slice(0, index).trim();
-    buffer = buffer.slice(index + 1);
+      let index;
+      while ((index = buffer.indexOf("\n")) !== -1) {
+        const line = buffer.slice(0, index).trim();
+        buffer = buffer.slice(index + 1);
 
-    if (!line) continue;
+        if (!line) continue;
 
-    try {
-      const response = JSON.parse(line);
-      if (response.error) {
-        reject(new Error(response.error));
-      } else {
-        clearTimeout(timeout);
-        pyProcess!.stdout.off('data', onData); 
-        resolve(response.embedding);
+        try {
+          const parsed = JSON.parse(line);
+          clearTimeout(timeout);
+
+          if (parsed.error) {
+            reject(new Error(parsed.error));
+          } else {
+            resolve(parsed.embedding);
+          }
+        } catch (err) {
+          reject(err);
+        } finally {
+          pyProcess?.stdout.off("data", handleData);
+        }
       }
-    } catch (e) {
-    }
-  }
-};
+    };
 
-pyProcess!.stdout.on('data', onData);
-    
-    pyProcess!.stdout.once('data', onData);
+    pyProcess.stdout.on("data", handleData);
   });
 }
 
@@ -158,7 +159,7 @@ export async function createIndex(indexName = 'faq', channelId: string) {
 
 export async function searchSimilarDocs(question: string) {
   const queryVector = await getEmbedding(question);
-  
+  console.log('Query vector:', queryVector);
   const { body } = await client.search({
     index: 'faq-investimentos',
     body: {

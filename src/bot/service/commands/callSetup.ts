@@ -1,7 +1,6 @@
 import { Message, TextChannel } from 'discord.js';
 import { collectIndexName, handleRefusedSetup } from '../setup';
 import { setupMessages } from '../../readyMessages';
-import { isChannelProcessed } from '../../../processedChannels';
 
 async function handleSetupResponse(
   channel: TextChannel, 

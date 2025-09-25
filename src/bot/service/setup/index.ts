@@ -1,10 +1,7 @@
 import { Message, TextChannel } from 'discord.js';
-import {  markChannelProcessed } from "../../../processedChannels";
+import {  markChannelProcessed } from "../../../openSearch/processedChannels";
 import { setupMessages } from "../../readyMessages";
-import fs from 'fs';
-import { createIndex, getEmbedding, indexDiscordMessages } from '../../../opensearch';
-import { channel } from 'diagnostics_channel';
-import pLimit from 'p-limit';
+import { createIndex, getEmbedding, indexDiscordMessages } from '../../../openSearch/opensearch';
 
 interface RawMessage {
   id: string;

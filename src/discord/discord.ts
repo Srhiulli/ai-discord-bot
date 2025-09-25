@@ -1,6 +1,5 @@
 import { Client, GatewayIntentBits, TextChannel } from 'discord.js';
 import dotenv from 'dotenv';
-import { indexDiscordMessages } from './opensearch';
 dotenv.config();
 
 const client = new Client({

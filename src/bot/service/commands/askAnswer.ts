@@ -1,4 +1,4 @@
-import { getAnswer } from "../../../answer";
+import { getAnswer } from "./answer";
 
 
 export async function askAnswer(question: string, channel: any) {
