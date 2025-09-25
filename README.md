@@ -1,33 +1,38 @@
-# Discord Bot com busca por similaridade no OS
+# Discord Bot com IA e busca por similaridade no OpenSearch
 
 Projeto para integrar um bot do Discord com o Bedrock, utilizando busca por similaridade para fornecer contexto nas respostas.
 
-## Estrutura de pastas
-
-```
-rag-discord-bot/
-├── src/
-│   ├── bedrock.ts        # Faz chamadas autenticadas o Bedrock
-│   ├── bot.ts            # Código principal do bot Discord
-│   ├── embeddings.ts     # Gera embeddings para perguntas e documentos
-│   ├── index-faqs.ts     # Indexa as FAQs com embeddings no OpenSearch
-│   ├── index.ts          # Entry point opcional para testes
-│   ├── opensearch.ts     # Cliente OpenSearch + funções de indexação e busca semântica
-│   ├── answer.ts         # Une a pergunta, com o contexto do OpenSearch enviando ao bedrock que responde
-│   ├── test-search.ts    # Busca por similaridade para testes
-│   ├── index-bedrock.ts  # Script para enviar prompt ao Bedrock
-├── .env                  # Token do Discord, URL/senha do OpenSearch, etc.
-```
-
+## Fluxo da busca vetorial do bot
+1.	O bot recebe uma pergunta do usuário no Discord.
+2.	A pergunta é transformada em um vetor numérico (embedding).
+3.	Esse vetor é comparado com os vetores dos documentos no OpenSearch.
+4.	O OpenSearch retorna os documentos mais similares com base na distância vetorial.
+5. O conteúdo retornado do OpenSearch é enviado para a IA junto da pergunta do usuário
+6.	Ia gera uma resposta que o bot envia no canal
 
 ## Variáveis de ambiente (.env)
 
 ```env
-DISCORD_BOT_TOKEN=seu_token
-OPENSEARCH_INITIAL_ADMIN_PASSWORD=senha_forte
-AWS_ACCESS_KEY_ID=_key
-AWS_SECRET_ACCESS_KEY=_key
-AWS_REGION=us-east-1
+# Discord
+DISCORD_BOT_TOKEN=
+CANAL_ID=
+
+# AWS (para Bedrock)
+AWS_ACCESS_KEY_ID=
+AWS_SECRET_ACCESS_KEY=
+AWS_REGION=
+
+# OpenSearch
+OPENSEARCH_HOSTS=https://opensearch:9200
+OPENSEARCH_USERNAME=
+OPENSEARCH_PASSWORD=
+OPENSEARCH_SSL_VERIFICATIONMODE=
+
+# Opções de cluster (quando rodando local via Docker)
+OPENSEARCH_INITIAL_ADMIN_PASSWORD=
+OPENSEARCH_ROOT_PASSWORD=
+discovery.type=single-node
+OPENSEARCH_JAVA_OPTS=
 ```
 
 ## Setup rápido
@@ -42,23 +47,9 @@ docker compose up -d
 ```
 3.	Configure .env com suas credenciais.
 
-4.  Crie os documentos no OpenSearch
-```bash
-yarn index:data
-```
-5. Teste a busca por similaridade
-```bash
-yarn search:similar
-```
-6. Teste a respoosta do Bedrock
-```bash
-yarn call:bedrock
-```
-7. Teste a respoosta do Bedrock cmo o contexto do OpenSearch
-```bash
-yarn call:answer
-```
-8.	Rode o bot:
+4.  Configure seu bot 
+
+5.	Rode o bot:
 ```bash
 yarn dev 
 ```
@@ -84,9 +75,3 @@ yarn dev
 7.	Copie o link gerado, cole no navegador e adicione o bot ao seu servidor
 
 
-## Como funciona a busca por similaridade
-1.	O bot recebe uma pergunta do usuário no Discord.
-2.	A pergunta é transformada em um vetor numérico (embedding).
-3.	Esse vetor é comparado com os vetores dos documentos no OpenSearch.
-4.	O OpenSearch retorna os documentos mais similares com base na distância vetorial.
-5.	O conteúdo retornado é enviado para a IA gerar uma resposta com base no contexto encontrado.
